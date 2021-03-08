@@ -1,12 +1,13 @@
 const request = require('request');
 const fs = require('fs');
-require("chromedriver"); 
+require("geckodriver"); 
 
+
+const readline = require('readline')
 const swd = require("selenium-webdriver"); 
-const browser = new swd.Builder(); 
-const tab = browser.forBrowser("chrome").build(); 
-//*[@id="pane-side"]/div[1]/div/div/div[1]
 
+const tab = new swd.Builder().forBrowser("firefox").build() 
+//*[@id="pane-side"]/div[1]/div/div/div[1]
 const getElementByXPath = xPath => new Promise((res, rej) => {
     const checkInp = setInterval(() => {
         tab.findElements(swd.By.xpath(xPath)).then(e => {
@@ -19,25 +20,26 @@ const getElementByXPath = xPath => new Promise((res, rej) => {
         })
     }, 1000)
 });
-
 const sleep = mSec => new Promise((res, rej) => setTimeout(() => res(), mSec))
 
-const init = async () => {
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+   
+rl.question('Write element id:  ', id => {
+    init(id.trim())
+    rl.close();
+});
+
+const init = async (id) => {
     await tab.get('https://web.whatsapp.com/'); 
     // const allChats = await getElementByClassName('_1MZWu');
     // const allChatsLength = allChats.length;
 
-    const chat1 = await getElementByXPath('//*[@id="pane-side"]/div[1]/div/div/div[11]');
-    const chat2 = await getElementByXPath('//*[@id="pane-side"]/div[1]/div/div/div[10]');
-    const state = {
-        count: 0,
-        totalTime: 0,
-        online: false,
-        visited: false,
-        left: false,
-    };
+    const chat1 = await getElementByXPath(`//*[@id="pane-side"]/div[1]/div/div/div[${id}]`);
 
-    const state2 = {
+    const state = {
         count: 0,
         totalTime: 0,
         online: false,
@@ -78,64 +80,6 @@ const init = async () => {
 
             fs.appendFileSync('onlineList', `Count: ${state.count} TotalTime ${new Date(state.totalTime).toGMTString().substring(17, 25)}\n`);
         }
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        console.log(status1, '1')
-        // if (state.online) {
-        //     await chat2.click();
-        //     await sleep(2000);
-    
-        //     const status2 = await checkStatusIsOnline();
-
-        //     if (status2) {
-        //         fs.appendFileSync('onlineList', '2-ONLINE \n');
-        //     } else {
-        //         fs.appendFileSync('onlineList', '2-OFFLINE \n');
-        //     }
-        // }
-
-
-        if (true) {
-            await chat2.click();
-            await sleep(2000);
-    
-            const status2 = await checkStatusIsOnline();
-
-            if (status2 && !state2.online) {
-                // дата входа!
-                const stamp = new Date();
-    
-                fs.appendFileSync('onlineList', `2) Visited: ${stamp.toLocaleString()} \n`);
-                state2.online = true;
-                state2.visited = stamp;
-            }
-    
-            if (!status2 && state2.online) {
-                // дата выхода 
-                const stamp = new Date();
-    
-                fs.appendFileSync('onlineList', `2) Left: ${stamp.toLocaleString()} \n`);
-                state2.online = false;
-                state2.left = stamp;
-            }
-    
-            if (state2.visited && state2.left) {
-                state2.totalTime += state2.left.getTime() - state2.visited.getTime();
-
-                state2.visited = false;
-                state2.left = false;
-                state2.count += 1;
-    
-                fs.appendFileSync('onlineList', `2) Count: ${state2.count} TotalTime ${new Date(state2.totalTime).toGMTString().substring(17, 25)} \n`);
-            }
-            console.log(status2, '2')
-        }
-        // await chat2.click();
-        // await sleep(3000);
-
-        // const status2 = await checkStatusIsOnline();
-
-        // console.log(status2, '2')
-        ////////////////////////////////////
 
         await sleep(3000)
         await check();
@@ -155,10 +99,5 @@ const checkStatusIsOnline = async () => {
     return false;
 }
 
-init()
 
 // tab.executeScript("alert()")
-
-const consoleText = (text) => {
-    console.log(`\n*-----------------------------------------------------------------*\n ${text}\n*-----------------------------------------------------------------*`);
-}
